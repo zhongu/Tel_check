@@ -12,7 +12,7 @@ on:
 
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
@@ -30,11 +30,6 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-    - name: Run weather Report
+    - name: Run Telbot check
       run: |
-        python weather_report.py
-      env:
-        APP_ID: ${{ secrets.APP_ID }}
-        APP_SECRET: ${{ secrets.APP_SECRET }}
-        OPEN_ID: ${{ secrets.OPEN_ID }}
-        TEMPLATE_ID: ${{ secrets.TEMPLATE_ID }}
+        python all_in_one.py
