@@ -67,7 +67,7 @@ class bot_check():
 
 api_id = [25054337]  # 输入api_id，一个账号一项
 api_hash = ['0dd2d3ee3e857e74a712992696dff2e9']  # 输入api_hash，一个账号一项
-bots_connands = {"@tsfsgkbot": ["/qd", "签到"], "@svipxddosbot": ["签到领积分", "成功"],"@pingansgk_bot": ["/qd", "签到"],"@HereisHopeBot": ["/sign", "每日签到"],"@aishegongkubot": ["/sign", "每日签到"]}
+bots_connands = {"@tsfsgkbot": ["/qd", "签到"], "@svipxddosbot": ["签到领积分", "成功"],"@pingansgk_bot": ["/qd", "签到"],"@HereisHopeBot": ["/sign", "每日签到"]}
 session_name = api_id[:]
 for num in range(len(api_id)):
     session_name[num] = "id_" + str(session_name[num])
