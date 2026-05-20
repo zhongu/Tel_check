@@ -108,7 +108,6 @@ api_hash = [os.environ["TELEGRAM_API_HASH"]]
 # Disabled bots with no response or invalid usernames:
 # @tsfsgkbot, @svipxddosbot, @pingansgk_bot, @HereisHopeBot, @aishegongkubot
 bots_connands = {
-    "@Zonesgk_bot": ["/qd", ""],
     "@Xray_E_Bot": ["/qd", ""],
     "@tianjigebot": ["/sign", ""],
     "@aisgk111111bot": ["📅 签到", ""],
@@ -132,39 +131,42 @@ def main():
             raise RuntimeError("Telegram session is not authorized.")
         log("session {} connected".format(session_name[num]))
         for key, value in bots_connands.items():
-            log("{}: sending command {}".format(key, value[0]))
-            client.send_message(key, value[0])  # 第一项是机器人ID，第二项是发送的文字
-            time.sleep(2)  # 延时5秒，等待机器人回应（一般是秒回应，但也有发生阻塞的可能）
-            messages = client.get_messages(key)
-            latest_message = messages[0].message or ""
-            log("{}: latest reply: {}".format(key, latest_message))
-            if value[1] not in latest_message:
-                if messages[0].buttons != None:
-                    log("{}: inline captcha detected".format(key))
-                    i = 0
-                    the_result = bot_check.bot_inline(key, messages)
-                    while value[1] not in (the_result or ""):
-                        time.sleep(10)
-                        i += 1
-                        log("{}: inline retry {}/5".format(key, i))
-                        the_result = bot_check.bot_inline2(key, value[0])
-                        if i >= 5:
-                            log("{}: stopped after 5 retries".format(key))
-                            break
+            try:
+                log("{}: sending command {}".format(key, value[0]))
+                client.send_message(key, value[0])  # 第一项是机器人ID，第二项是发送的文字
+                time.sleep(2)  # 延时5秒，等待机器人回应（一般是秒回应，但也有发生阻塞的可能）
+                messages = client.get_messages(key)
+                latest_message = messages[0].message or ""
+                log("{}: latest reply: {}".format(key, latest_message))
+                if value[1] not in latest_message:
+                    if messages[0].buttons != None:
+                        log("{}: inline captcha detected".format(key))
+                        i = 0
+                        the_result = bot_check.bot_inline(key, messages)
+                        while value[1] not in (the_result or ""):
+                            time.sleep(10)
+                            i += 1
+                            log("{}: inline retry {}/5".format(key, i))
+                            the_result = bot_check.bot_inline2(key, value[0])
+                            if i >= 5:
+                                log("{}: stopped after 5 retries".format(key))
+                                break
+                    else:
+                        log("{}: image captcha detected".format(key))
+                        i = 0
+                        the_result = bot_check.bot_pic(key, messages)
+                        while value[1] not in (the_result or ""):
+                            time.sleep(10)
+                            i += 1
+                            log("{}: image retry {}/5".format(key, i))
+                            the_result = bot_check.bot_pic2(key, value[0])
+                            if i >= 5:
+                                log("{}: stopped after 5 retries".format(key))
+                                break
                 else:
-                    log("{}: image captcha detected".format(key))
-                    i = 0
-                    the_result = bot_check.bot_pic(key, messages)
-                    while value[1] not in (the_result or ""):
-                        time.sleep(10)
-                        i += 1
-                        log("{}: image retry {}/5".format(key, i))
-                        the_result = bot_check.bot_pic2(key, value[0])
-                        if i >= 5:
-                            log("{}: stopped after 5 retries".format(key))
-                            break
-            else:
-                log("{}: success marker found, skipping captcha".format(key))
+                    log("{}: success marker found, skipping captcha".format(key))
+            except Exception as exc:
+                log("{}: skipped after error {}: {}".format(key, type(exc).__name__, exc))
 
 
 if __name__ == "__main__":
