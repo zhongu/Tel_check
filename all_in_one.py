@@ -2,7 +2,6 @@
 import os
 import sys
 import time
-import socks
 from telethon import TelegramClient, events, sync
 from telethon.sessions import StringSession
 import tg_code
@@ -15,21 +14,6 @@ def log(message):
     text = "[telegram_check] {}".format(message)
     encoding = sys.stdout.encoding or "utf-8"
     print(text.encode(encoding, errors="replace").decode(encoding), flush=True)
-
-
-def get_proxy():
-    proxy_url = os.environ.get("TELEGRAM_PROXY", "").strip()
-    if not proxy_url:
-        return None
-
-    proxy_type, address = proxy_url.split("://", 1)
-    host, port = address.rsplit(":", 1)
-    proxy_types = {
-        "socks5": socks.SOCKS5,
-        "socks4": socks.SOCKS4,
-        "http": socks.HTTP,
-    }
-    return (proxy_types[proxy_type.lower()], host, int(port))
 
 
 def get_session(session_name):
@@ -140,7 +124,6 @@ def main():
             get_session(session_name[num]),
             api_id[num],
             api_hash[num],
-            proxy=get_proxy(),
             timeout=CLIENT_TIMEOUT,
             connection_retries=CLIENT_RETRIES,
         )

@@ -2,12 +2,10 @@
 import os
 import time
 
-import socks
 from telethon import TelegramClient, events, sync
 
 import tg_code
 
-TG_PROXY = (socks.SOCKS5, "127.0.0.1", 7890)
 CLIENT_TIMEOUT = 20
 CLIENT_RETRIES = 2
 
@@ -52,7 +50,6 @@ for num in range(len(api_id)):
         session_name[num],
         api_id[num],
         api_hash[num],
-        proxy=TG_PROXY,
         timeout=CLIENT_TIMEOUT,
         connection_retries=CLIENT_RETRIES,
     )
