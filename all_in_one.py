@@ -3,7 +3,6 @@ import os
 import sys
 import time
 from telethon import TelegramClient, events, sync
-from telethon.sessions import StringSession
 import tg_code
 
 CLIENT_TIMEOUT = 20
@@ -14,15 +13,6 @@ def log(message):
     text = "[telegram_check] {}".format(message)
     encoding = sys.stdout.encoding or "utf-8"
     print(text.encode(encoding, errors="replace").decode(encoding), flush=True)
-
-
-def get_session(session_name):
-    session_string = os.environ.get("TELEGRAM_SESSION_STRING", "").strip()
-    if session_string:
-        return StringSession(session_string)
-    if os.environ.get("GITHUB_ACTIONS") == "true":
-        raise RuntimeError("TELEGRAM_SESSION_STRING secret is missing or empty")
-    return session_name
 
 
 class bot_check():
@@ -121,7 +111,7 @@ def main():
         session_name[num] = "id_" + str(session_name[num])
         log("starting session {}".format(session_name[num]))
         client = TelegramClient(
-            get_session(session_name[num]),
+            session_name[num],
             api_id[num],
             api_hash[num],
             timeout=CLIENT_TIMEOUT,
@@ -129,9 +119,7 @@ def main():
         )
         client.connect()
         if not client.is_user_authorized():
-            raise RuntimeError(
-                "Telegram session is not authorized. Regenerate TELEGRAM_SESSION_STRING from a logged-in session."
-            )
+            raise RuntimeError("Telegram session is not authorized.")
         log("session {} connected".format(session_name[num]))
         for key, value in bots_connands.items():
             log("{}: sending command {}".format(key, value[0]))
