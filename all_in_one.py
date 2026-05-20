@@ -4,9 +4,9 @@ import sys
 import time
 import socks
 from telethon import TelegramClient, events, sync
+from telethon.sessions import StringSession
 import tg_code
 
-TG_PROXY = (socks.SOCKS5, "127.0.0.1", 7890)
 CLIENT_TIMEOUT = 20
 CLIENT_RETRIES = 2
 
@@ -15,6 +15,28 @@ def log(message):
     text = "[telegram_check] {}".format(message)
     encoding = sys.stdout.encoding or "utf-8"
     print(text.encode(encoding, errors="replace").decode(encoding), flush=True)
+
+
+def get_proxy():
+    proxy_url = os.environ.get("TELEGRAM_PROXY", "").strip()
+    if not proxy_url:
+        return None
+
+    proxy_type, address = proxy_url.split("://", 1)
+    host, port = address.rsplit(":", 1)
+    proxy_types = {
+        "socks5": socks.SOCKS5,
+        "socks4": socks.SOCKS4,
+        "http": socks.HTTP,
+    }
+    return (proxy_types[proxy_type.lower()], host, int(port))
+
+
+def get_session(session_name):
+    session_string = os.environ.get("TELEGRAM_SESSION_STRING", "").strip()
+    if session_string:
+        return StringSession(session_string)
+    return session_name
 
 
 class bot_check():
@@ -107,46 +129,56 @@ bots_connands = {
     "@nb3344bot": ["/qd", ""],
     "@LSMCDLXBOT": ["📅 签到", ""],
 }
-session_name = api_id[:]
-for num in range(len(api_id)):
-    session_name[num] = "id_" + str(session_name[num])
-    log("starting session {}".format(session_name[num]))
-    client = TelegramClient(session_name[num], api_id[num], api_hash[num], proxy=TG_PROXY, timeout=CLIENT_TIMEOUT, connection_retries=CLIENT_RETRIES)
-    client.start()
-    log("session {} connected".format(session_name[num]))
-    for key, value in bots_connands.items():
-        log("{}: sending command {}".format(key, value[0]))
-        client.send_message(key, value[0])  # 第一项是机器人ID，第二项是发送的文字
-        time.sleep(2)  # 延时5秒，等待机器人回应（一般是秒回应，但也有发生阻塞的可能）
-        messages = client.get_messages(key)
-        latest_message = messages[0].message or ""
-        log("{}: latest reply: {}".format(key, latest_message))
-        if value[1] not in latest_message:
-            if messages[0].buttons != None:
-                log("{}: inline captcha detected".format(key))
-                i = 0
-                the_result = bot_check.bot_inline(key, messages)
-                while value[1] not in (the_result or ""):
-                    time.sleep(10)
-                    i += 1
-                    log("{}: inline retry {}/5".format(key, i))
-                    the_result = bot_check.bot_inline2(key, value[0])
-                    if i >= 5:
-                        log("{}: stopped after 5 retries".format(key))
-                        break
+def main():
+    session_name = api_id[:]
+    for num in range(len(api_id)):
+        session_name[num] = "id_" + str(session_name[num])
+        log("starting session {}".format(session_name[num]))
+        client = TelegramClient(
+            get_session(session_name[num]),
+            api_id[num],
+            api_hash[num],
+            proxy=get_proxy(),
+            timeout=CLIENT_TIMEOUT,
+            connection_retries=CLIENT_RETRIES,
+        )
+        client.start()
+        log("session {} connected".format(session_name[num]))
+        for key, value in bots_connands.items():
+            log("{}: sending command {}".format(key, value[0]))
+            client.send_message(key, value[0])  # 第一项是机器人ID，第二项是发送的文字
+            time.sleep(2)  # 延时5秒，等待机器人回应（一般是秒回应，但也有发生阻塞的可能）
+            messages = client.get_messages(key)
+            latest_message = messages[0].message or ""
+            log("{}: latest reply: {}".format(key, latest_message))
+            if value[1] not in latest_message:
+                if messages[0].buttons != None:
+                    log("{}: inline captcha detected".format(key))
+                    i = 0
+                    the_result = bot_check.bot_inline(key, messages)
+                    while value[1] not in (the_result or ""):
+                        time.sleep(10)
+                        i += 1
+                        log("{}: inline retry {}/5".format(key, i))
+                        the_result = bot_check.bot_inline2(key, value[0])
+                        if i >= 5:
+                            log("{}: stopped after 5 retries".format(key))
+                            break
+                else:
+                    log("{}: image captcha detected".format(key))
+                    i = 0
+                    the_result = bot_check.bot_pic(key, messages)
+                    while value[1] not in (the_result or ""):
+                        time.sleep(10)
+                        i += 1
+                        log("{}: image retry {}/5".format(key, i))
+                        the_result = bot_check.bot_pic2(key, value[0])
+                        if i >= 5:
+                            log("{}: stopped after 5 retries".format(key))
+                            break
             else:
-                log("{}: image captcha detected".format(key))
-                i = 0
-                the_result = bot_check.bot_pic(key, messages)
-                while value[1] not in (the_result or ""):
-                    time.sleep(10)
-                    i += 1
-                    log("{}: image retry {}/5".format(key, i))
-                    the_result = bot_check.bot_pic2(key, value[0])
-                    if i >= 5:
-                        log("{}: stopped after 5 retries".format(key))
-                        break
-        else:
-            log("{}: success marker found, skipping captcha".format(key))
+                log("{}: success marker found, skipping captcha".format(key))
 
-os._exit(0)
+
+if __name__ == "__main__":
+    main()

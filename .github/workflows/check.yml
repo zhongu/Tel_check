@@ -22,6 +22,8 @@ jobs:
       TZ: Asia/Shanghai
       TELEGRAM_API_ID: ${{ secrets.TELEGRAM_API_ID }}
       TELEGRAM_API_HASH: ${{ secrets.TELEGRAM_API_HASH }}
+      TELEGRAM_SESSION_STRING: ${{ secrets.TELEGRAM_SESSION_STRING }}
+      TELEGRAM_PROXY: ${{ secrets.TELEGRAM_PROXY }}
       TRUECAPTCHA_USERID: ${{ secrets.TRUECAPTCHA_USERID }}
       TRUECAPTCHA_APIKEY: ${{ secrets.TRUECAPTCHA_APIKEY }}
     steps:
