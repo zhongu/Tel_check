@@ -36,6 +36,8 @@ def get_session(session_name):
     session_string = os.environ.get("TELEGRAM_SESSION_STRING", "").strip()
     if session_string:
         return StringSession(session_string)
+    if os.environ.get("GITHUB_ACTIONS") == "true":
+        raise RuntimeError("TELEGRAM_SESSION_STRING secret is missing or empty")
     return session_name
 
 
