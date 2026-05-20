@@ -144,7 +144,11 @@ def main():
             timeout=CLIENT_TIMEOUT,
             connection_retries=CLIENT_RETRIES,
         )
-        client.start()
+        client.connect()
+        if not client.is_user_authorized():
+            raise RuntimeError(
+                "Telegram session is not authorized. Regenerate TELEGRAM_SESSION_STRING from a logged-in session."
+            )
         log("session {} connected".format(session_name[num]))
         for key, value in bots_connands.items():
             log("{}: sending command {}".format(key, value[0]))
